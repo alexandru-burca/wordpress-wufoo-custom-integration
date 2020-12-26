@@ -37,6 +37,11 @@ class ADMIN_HOOKS{
      protected function logs(){
           $settingsPage = new LOGS;
           add_action( 'admin_menu', array($settingsPage, 'register_sub_menu') );
+          add_action( 'admin_enqueue_scripts', array($settingsPage, 'enqueue'));
+     }
+
+     protected function general(){
+         add_action( 'admin_enqueue_scripts', array($this, 'enqueue'));
      }
 }
 

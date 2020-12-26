@@ -20,7 +20,6 @@ class WufooHelper{
                 $this->$method();
             else: 
                 $this->errors->writeError();
-                $this->log->submittedData($this->fields);//for debug
                 return;
             endif;
         endforeach;

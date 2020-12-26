@@ -25,6 +25,7 @@ class RECAPTCHA{
                 return true;
             else:
                 $this->reCaptchaErrorsLog($result['error-codes'][0]);
+                $this->log->reCaptcha($result['error-codes'][0]);
                 return false;
             endif;
         else:
@@ -36,7 +37,6 @@ class RECAPTCHA{
 
     protected function reCaptchaErrorsLog($message){
         $this->log->reCaptcha($message);
-        $this->log->submittedData($_POST);//for debug
         $this->errors->addFormError('reCaptcha - Try again');
         $this->errors->writeError();
     }
