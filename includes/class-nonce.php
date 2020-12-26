@@ -12,8 +12,7 @@ class NONCE{
 
     public function validate(){
         if(!isset($_POST['wurenonce']) || !\wp_verify_nonce($_POST['wurenonce'], 'wuresecretaction')):
-            $this->log->nounce();
-            $this->log->submittedData($_POST);//for debug
+            $this->log->nonce();
             $this->errors->addFormError("Nonce not set");
             $this->errors->writeError();
             return false;

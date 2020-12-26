@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Wufoo - Custom integration
  * Description: Integrate Wufoo with Wordpress using API
- * Version:     0.0.1
+ * Version:     0.0.2
  * Plugin URI:  https://github.com/alexandru-burca/wordpress-wufoo-custom-integration
  * Author:      Alex Burca
  * Author URI:  https://www.linkedin.com/in/burca-alexandru/
@@ -12,27 +12,32 @@
 
 defined( 'ABSPATH' ) or die();
 
+//Define Global Constants
+defined( 'WURE_PATH' ) or define( 'WURE_PATH', plugin_dir_path( __FILE__ ) );
+defined( 'WURE_URL' )  or define( 'WURE_URL',  plugin_dir_url( __FILE__ ) );
+defined( 'WURE_DB_TABLE' ) or define( 'WURE_DB_TABLE', 'wure_logs' );
+
 class WURE_MAIN_CLASS{
-     function __construct(){}
+     function __construct(){
+         //WP Backend code
+         require_once(WURE_PATH . "/admin/admin.php");
 
-     public function init(){
-          add_action('init', array ( $this, 'form'));
-     }
+         //WP frontend code
+         require_once(WURE_PATH . "/includes/wp/core.php");
 
-     public function require(){
-          //WP Backend code
-          require_once(__DIR__."/admin/admin.php");
+         //Other Classes
+         require_once(WURE_PATH . "/includes/class-logs.php");
+         require_once(WURE_PATH . "/includes/class-form-errors.php");
+         require_once(WURE_PATH . "/includes/class-nonce.php");
+         require_once(WURE_PATH . "/includes/class-honeypot.php");
+         require_once(WURE_PATH . "/includes/class-reCaptcha.php");
+         require_once(WURE_PATH. "/includes/class-WufooHelper.php");
 
-          //WP frontend code 
-          require_once(__DIR__."/includes/wp/core.php");
+         //Build DB
+         register_activation_hook( __FILE__, array($this, 'buildDB') );
 
-          //Other Classes
-          require_once(__DIR__."/includes/class-logs.php");
-          require_once(__DIR__."/includes/class-form-errors.php");
-          require_once(__DIR__."/includes/class-nonce.php");
-          require_once(__DIR__."/includes/class-honeypot.php");
-          require_once(__DIR__."/includes/class-reCaptcha.php");
-          require_once(__DIR__."/includes/class-WufooHelper.php");
+         //Actions
+         add_action( 'init', array ( $this, 'form'));
      }
 
      public function form(){
@@ -68,9 +73,30 @@ class WURE_MAIN_CLASS{
                $wufoo->process();
           endif;
      }
+
+     public function buildDB(){
+         require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+
+         global $wpdb;
+
+         //Table Name
+         $tableName = $wpdb->prefix.WURE_DB_TABLE;
+
+         //Table structure
+         $charset_collate = $wpdb->get_charset_collate();
+         dbDelta( "CREATE TABLE $tableName (
+              id mediumint(9) NOT NULL AUTO_INCREMENT,
+              ip text DEFAULT NULL,
+              referrer text DEFAULT NULL,
+              browser text DEFAULT NULL,
+              reCaptcha text DEFAULT NULL,
+              wufoo text DEFAULT NULL,
+              data text DEFAULT NULL,
+              nonce tinyint(1) DEFAULT 1,
+              honeypot tinyint(1) DEFAULT 0,
+              time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+              PRIMARY KEY  (id)
+         ) $charset_collate;" );
+     }
 }
 $WURE = new WURE_MAIN_CLASS;
-//Include all php classes
-$WURE->require();
-//Init the code
-$WURE->init();

@@ -84,3 +84,7 @@ The only way to integrate **Wufoo** with **Wordpress** is through iframe. This b
 - WP nonce
 
 **IMPORTANT:** *The HTML `<input>` name should match the same attribute as the wufoo form*
+
+**Changelog**
+ - 0.0.2 - Register logs into DB instead a `.txt` file
+ - 0.0.1 - First Version

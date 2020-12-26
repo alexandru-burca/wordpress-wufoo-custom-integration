@@ -3,79 +3,72 @@
 namespace WURE;
 
 class LOGS{
-    protected $file = '';
-    protected $pathToFile = ABSPATH.'/wp-content/wure.log';
+    protected $insertData = [
+        'reCaptcha' => null,
+        'wufoo' => null,
+    ];
 
     function __construct(){
-        $this->openFile();
-        $this->writeTime();
-        $this->writeIP();
-        $this->referer();
-        $this->browser();
+        $this->setTime();
+        $this->setIP();
+        $this->setReferrer();
+        $this->setBrowser();
+        $this->setSubmittedData();
     }
 
     function __destruct(){
-        fputs($this->file, "\n\n");
-        $this->closeFile();
+        global $wpdb;
+        $wpdb->insert( $wpdb->prefix.WURE_DB_TABLE, $this->insertData);
     }
 
-    protected function openFile(){
-        $this->file = fopen($this->pathToFile, "a");//Open in write mode
+    protected  function setTime(){
+        $this->insertData['time'] = current_time('mysql');
     }
 
-    protected function closeFile(){
-        fclose($this->file);
-    }
-
-    protected function writeTime(){
-        fputs($this->file, date('Y-m-d H:i:s'));
-    }
-
-    protected function writeIP(){
+    protected function setIP(){
         if (!empty($_SERVER['HTTP_CLIENT_IP'])):
             //whether ip is from share internet
-            $ip_address = $_SERVER['HTTP_CLIENT_IP'];
+            $this->insertData['ip'] = $_SERVER['HTTP_CLIENT_IP'];
         elseif(!empty($_SERVER['HTTP_X_FORWARDED_FOR'])):
             //whether ip is from proxy
-            $ip_address = $_SERVER['HTTP_X_FORWARDED_FOR'];
+            $this->insertData['ip'] = $_SERVER['HTTP_X_FORWARDED_FOR'];
         else:
             //whether ip is from remote address
-            $ip_address = $_SERVER['REMOTE_ADDR'];
-        endif;
-        fputs($this->file, " [".$ip_address."] ");
-    }
-
-    protected function referer(){
-        if(isset($_POST['_wp_http_referer'])):
-            fputs($this->file, '    Referer- "'.$_POST['_wp_http_referer'].'".');
+            $this->insertData['ip'] = $_SERVER['REMOTE_ADDR'];
         endif;
     }
 
-    protected function browser(){
-        fputs($this->file, "    Browser- ".$_SERVER['HTTP_USER_AGENT'].".");
+    protected function setReferrer(){
+        if(isset($_POST['_wp_http_referer'])) $this->insertData['referrer'] = $_POST['_wp_http_referer'];
+    }
+
+    protected function setBrowser(){
+        $this->insertData['browser'] = $_SERVER['HTTP_USER_AGENT'];
     }
 
     public function reCaptcha($message){
-        fputs($this->file, "    reCaptcha- ".$message.".");
+        $this->insertData['reCaptcha'] = $message;
     }
 
     public function wufoo($message){
-        fputs($this->file, "    Wufoo- ".$message.".");
+        $this->insertData['wufoo'] = $message;
     }
 
-    public function nounce(){
-        fputs($this->file, "    Nonce- not set.");  
+    public function nonce(){
+       $this->insertData['nonce'] = false;
     }
 
     public function honeypot(){
-        fputs($this->file, "    Honeypot set.");  
+        $this->insertData['honeypot'] = true;
     }
 
-    public function submittedData($message = []){
+    public function setSubmittedData(){
+        $message = $_POST;
+
         //Remove reCaptcha post data, it's useless in log
         unset($message['g-recaptcha-response']);
 
-        //Put post data
-        fputs($this->file, "    Data sent- ".json_encode($message));
+        //Post data
+        $this->insertData['data'] = json_encode($message);
     }
 }
